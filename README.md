@@ -1,0 +1,1 @@
+# binance_pipeline_streaming_dados
