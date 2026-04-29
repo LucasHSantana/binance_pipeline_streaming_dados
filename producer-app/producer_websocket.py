@@ -40,6 +40,7 @@ def topic_exists(topic_name: str) -> bool:
     admin_client = AdminClient(conf)  # type: ignore
     metadata = admin_client.list_topics(timeout=10)
 
+    print(topic_name in metadata.topics)
     return topic_name in metadata.topics
 
 
@@ -156,13 +157,28 @@ if __name__ == '__main__':
         print('Trying connection...')
         sleep(2)
 
-    if not topic_exists(normalized_trade_topic):
-        print(f'Tópico {normalized_trade_topic} não existe no kafka!')
-        exit()
+    retries = 10
 
-    if not topic_exists(raw_trade_topic):
+    while not topic_exists(normalized_trade_topic):
+        print(f'Tópico {normalized_trade_topic} não existe no kafka!')
+
+        if retries == 0:
+            exit()
+
+        retries -= 1
+        sleep(5)
+
+    retries = 10
+    
+    while not topic_exists(raw_trade_topic):
         print(f'Tópico {raw_trade_topic} não existe no kafka!')
-        exit()
+        
+        if retries == 0:
+            exit()
+        
+        retries -= 1
+        sleep(5)
+
 
     threads: list = []
 

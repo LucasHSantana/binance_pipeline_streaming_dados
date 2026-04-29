@@ -3,7 +3,7 @@ name: pipeline-financeiro
 services:
   kafka-init:
     container_name: kafka-init
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     depends_on:
       - kafka-1
       - kafka-2
@@ -16,7 +16,7 @@ services:
       - 'sparknet'
 
   kafka-1:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka-1
     restart: on-failure
     ports:
@@ -40,7 +40,7 @@ services:
       - 'sparknet'
 
   kafka-2:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka-2
     restart: on-failure
     ports:
@@ -64,7 +64,7 @@ services:
       - 'sparknet'
 
   kafka-3:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka-3
     restart: on-failure
     ports:
@@ -90,13 +90,13 @@ services:
   python-producer-app:
     build: ./producer-app
     container_name: python-producer-app
+    restart: on-failure
     depends_on: 
       - kafka-1
       - kafka-2
       - kafka-3
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka-1:9092,kafka-2:9092,kafka-3:9092"
-
     networks:
       - 'sparknet'
 
@@ -151,6 +151,26 @@ services:
       JUPYTER_TOKEN: '1234'
     volumes:
       - ./notebooks:/home/jovyan/work
+    env_file:
+      - .env
+    networks:
+      - 'sparknet'
+
+  spark-consumer-app:
+    build: ./consumer-app
+    container_name: spark-consumer-app
+    tty: true
+    depends_on: 
+      - spark-master
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    restart: on-failure
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SAVE_TO_S3=false
+    env_file:
+      - .env
     networks:
       - 'sparknet'
 
