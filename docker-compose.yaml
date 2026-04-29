@@ -87,6 +87,73 @@ services:
     networks:
       - 'sparknet'
 
+  python-producer-app:
+    build: ./producer-app
+    container_name: python-producer-app
+    depends_on: 
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka-1:9092,kafka-2:9092,kafka-3:9092"
+
+    networks:
+      - 'sparknet'
+
+
+  spark-master:
+    image: public.ecr.aws/bitnami/spark:3.5.0
+    container_name: spark-master
+    restart: on-failure
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+    environment:
+      SPARK_MODE: 'master'
+      SPARK_SUBMIT_OPTS: > 
+        --packages 
+        org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,
+        org.apache.hadoop:hadoop-aws:3.3.4,
+        com.amazonaws:aws-java-sdk-bundle:1.12.262,
+        org.apache.hadoop.fs.s3a.S3AFileSystem
+    networks:
+      - 'sparknet'
+
+  spark-worker:
+    image: public.ecr.aws/bitnami/spark:3.5.0
+    restart: on-failure
+    deploy:
+      replicas: 3
+    environment:
+      SPARK_MODE: 'worker'
+      SPARK_MASTER_URL: 'spark://spark-master:7077'
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 2G
+      SPARK_SUBMIT_OPTS: > 
+        --packages 
+        org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,
+        org.apache.hadoop:hadoop-aws:3.3.4,
+        com.amazonaws:aws-java-sdk-bundle:1.12.262,
+        org.apache.hadoop.fs.s3a.S3AFileSystem
+    depends_on:
+      - spark-master
+    networks:
+      - 'sparknet'
+
+  jupyter-spark:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter-spark
+    ports:
+      - '8888:8888' 
+      - '4040:4040'
+    environment:
+      JUPYTER_ENABLE_LAB: 'yes'
+      JUPYTER_TOKEN: '1234'
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    networks:
+      - 'sparknet'
+
 networks:
   sparknet:
     driver: bridge 

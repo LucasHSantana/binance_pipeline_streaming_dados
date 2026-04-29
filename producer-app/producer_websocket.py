@@ -13,7 +13,7 @@ raw_trade_topic = 'trades.raw'
 symbols = ['btcusdt', 'ethusdt']
 
 conf = {
-    'bootstrap.servers': 'localhost:29092,localhost:29093,localhost:29094',
+    'bootstrap.servers': 'kafka-1:9092,kafka-2:9092,kafka-3:9092',
 }
 
 
